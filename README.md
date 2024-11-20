@@ -17,3 +17,9 @@ The voting application only accepts one vote per client browser. It does not reg
 This isn't an example of a properly architected perfectly designed distributed app... it's just a simple
 example of the various types of pieces and languages you might see (queues, persistent data, etc), and how to
 deal with them in Docker at a basic level.
+  
+```sh
+https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.SSL.html
+```
+  
+I copied the example-voting-app, so I modified the code to work with aws_service. Please download the ssl authentication key of the rds server above so that I can modify the code!
