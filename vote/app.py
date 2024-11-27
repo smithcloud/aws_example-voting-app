@@ -6,8 +6,10 @@ import random
 import json
 import logging
 
+# 환경변수에서 Redis 호스트 가져오기
 option_a = os.getenv('OPTION_A', "Cats")
 option_b = os.getenv('OPTION_B', "Dogs")
+redis_host = os.getenv('REDIS_HOST')
 hostname = socket.gethostname()
 
 app = Flask(__name__)
@@ -17,11 +19,13 @@ app.logger.handlers.extend(gunicorn_error_logger.handlers)
 app.logger.setLevel(logging.INFO)
 
 def get_redis():
-    if not hasattr(g, 'redis.meoyyu.ng.0001.apn2.cache.amazonaws.com'):
-        g.redis = Redis(host="redis.meoyyu.ng.0001.apn2.cache.amazonaws.com", db=0, socket_timeout=5)
+    if not hasattr(g, 'redis'):
+        if not redis_host:
+            raise EnvironmentError("check 'REDIS_HOST' environment variable")
+        g.redis = Redis(host=redis_host, db=0, socket_timeout=5)
     return g.redis
 
-@app.route("/", methods=['POST','GET'])
+@app.route("/", methods=['POST', 'GET'])
 def hello():
     voter_id = request.cookies.get('voter_id')
     if not voter_id:
@@ -46,6 +50,7 @@ def hello():
     resp.set_cookie('voter_id', voter_id)
     return resp
 
-
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=80, debug=True, threaded=True)
+    app_host = os.getenv('FLASK_HOST', '0.0.0.0')
+    app_port = int(os.getenv('FLASK_PORT', 80))
+    app.run(host=app_host, port=app_port, debug=True, threaded=True)
