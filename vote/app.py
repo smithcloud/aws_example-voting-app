@@ -6,7 +6,6 @@ import random
 import json
 import logging
 
-# 환경변수에서 Redis 호스트 가져오기
 option_a = os.getenv('OPTION_A', "Cats")
 option_b = os.getenv('OPTION_B', "Dogs")
 redis_host = os.getenv('REDIS_HOST')
