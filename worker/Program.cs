@@ -16,8 +16,15 @@ namespace Worker
         {
             try
             {
-                var pgsql = OpenDbConnection("Host=postgres-15.c6melj87hlc4.ap-northeast-2.rds.amazonaws.com;Username=postgres;Password=postgres;SslMode=Require;TrustServerCertificate=True;");
-                var redisConn = OpenRedisConnection("redis.meoyyu.ng.0001.apn2.cache.amazonaws.com");
+                // 환경 변수에서 값 가져오기
+                string pgHost = Environment.GetEnvironmentVariable("PG_HOST");
+                string pgUser = Environment.GetEnvironmentVariable("PG_USERNAME");
+                string pgPassword = Environment.GetEnvironmentVariable("PG_PASSWORD");
+                string pgDatabase = Environment.GetEnvironmentVariable("PG_DATABASE");
+                string redisHost = Environment.GetEnvironmentVariable("REDIS_HOST");
+
+                var pgsql = OpenDbConnection($"Host={pgHost};Username={pgUser};Password={pgPassword};SslMode=Require;TrustServerCertificate=True;");
+                var redisConn = OpenRedisConnection(redisHost);
                 var redis = redisConn.GetDatabase();
 
                 var keepAliveCommand = pgsql.CreateCommand();
@@ -31,7 +38,7 @@ namespace Worker
                     if (redisConn == null || !redisConn.IsConnected)
                     {
                         Console.WriteLine("Reconnecting Redis");
-                        redisConn = OpenRedisConnection("redis.meoyyu.ng.0001.apn2.cache.amazonaws.com");
+                        redisConn = OpenRedisConnection(redisHost);
                         redis = redisConn.GetDatabase();
                     }
                     string json = redis.ListLeftPopAsync("votes").Result;
@@ -39,11 +46,11 @@ namespace Worker
                     {
                         var vote = JsonConvert.DeserializeAnonymousType(json, definition);
                         Console.WriteLine($"Processing vote for '{vote.vote}' by '{vote.voter_id}'");
-                        
+
                         if (!pgsql.State.Equals(System.Data.ConnectionState.Open))
                         {
                             Console.WriteLine("Reconnecting DB");
-                            pgsql = OpenDbConnection("Host=postgres-15.c6melj87hlc4.ap-northeast-2.rds.amazonaws.com;Username=postgres;Password=postgres;SslMode=Require;TrustServerCertificate=True;");
+                            pgsql = OpenDbConnection($"Host={pgHost};Username={pgUser};Password={pgPassword};SslMode=Require;TrustServerCertificate=True;");
                         }
                         else
                         {
