@@ -2,7 +2,8 @@ var express = require('express'),
     async = require('async'),
     { Pool } = require('pg'),
     cookieParser = require('cookie-parser'),
-    fs = require('fs'), 
+    fs = require('fs'),
+    path = require('path'),
     app = express(),
     server = require('http').Server(app),
     io = require('socket.io')(server);
@@ -10,18 +11,19 @@ var express = require('express'),
 var port = process.env.PORT || 4000;
 
 const dbConfig = {
-  user: 'postgres',
-  host: 'postgres-15.c6melj87hlc4.ap-northeast-2.rds.amazonaws.com',
-  database: 'postgres',
-  password: 'postgres',
-  port: 5432,
-  ssl: {
+  user: process.env.PG_USER,         
+  host: process.env.PG_HOST,        
+  database: process.env.PG_DATABASE, 
+  password: process.env.PG_PASSWORD, 
+  port: parseInt(process.env.PG_PORT, 10),
+  ssl: process.env.PG_SSL === 'true' ? {
     require: true,
     rejectUnauthorized: true,
-    ca: fs.readFileSync('./ap-northeast-2-bundle.pem').toString(),
-  }
+    ca: fs.existsSync('./ap-northeast-2-bundle.pem') ? fs.readFileSync('./ap-northeast-2-bundle.pem').toString() : undefined,
+  } : false
 };
 
+// 연결 풀 생성
 var pool = new Pool(dbConfig);
 
 io.on('connection', function (socket) {
@@ -37,7 +39,7 @@ async.retry(
   function (callback) {
     pool.connect(function (err, client, done) {
       if (err) {
-        console.error("DB Connection Error:", err.message); 
+        console.error("DB Connection Error:", err.message);
         return callback(err, null);
       }
       callback(null, client);
@@ -84,6 +86,5 @@ app.get('/', function (req, res) {
 });
 
 server.listen(port, function () {
-  var port = server.address().port;
   console.log('App running on port ' + port);
 });
